@@ -2,14 +2,14 @@ import { aiChoose, chooseBestCapture } from './ai';
 import type { AIWorkerRequest, AIWorkerResponse } from './types';
 
 self.onmessage = (e: MessageEvent<AIWorkerRequest>) => {
-  const { state, difficulty } = e.data;
+  const { state, difficulty, timeLimit } = e.data;
   try {
     if (state.awaiting_capture) {
       const pt = chooseBestCapture(state);
       const res: AIWorkerResponse = { type: 'capture', point: pt };
       self.postMessage(res);
     } else {
-      const move = aiChoose(state, difficulty);
+      const move = aiChoose(state, difficulty, { timeLimitMs: timeLimit });
       if (!move) {
         const res: AIWorkerResponse = { type: 'error', message: 'No moves available' };
         self.postMessage(res);

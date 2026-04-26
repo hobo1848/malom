@@ -290,8 +290,18 @@ export function chooseBestCapture(state: GameState): number {
 
 // ─── Main AI entry point ──────────────────────────────────────────────────────
 
-export function aiChoose(state: GameState, difficulty: Difficulty): AIMove | null {
+export interface AIOptions {
+  timeLimitMs?: number;
+}
+
+function normalizeTimeLimit(timeLimitMs?: number): number {
+  if (timeLimitMs == null || Number.isNaN(timeLimitMs)) return 1500;
+  return Math.max(50, Math.min(5000, Math.floor(timeLimitMs)));
+}
+
+export function aiChoose(state: GameState, difficulty: Difficulty, options: AIOptions = {}): AIMove | null {
   const me = state.turn;
+  const timeLimit = normalizeTimeLimit(options.timeLimitMs);
 
   if (state.phase === 'placement') {
     // Opening book for first few moves
@@ -316,12 +326,12 @@ export function aiChoose(state: GameState, difficulty: Difficulty): AIMove | nul
   }
 
   if (difficulty === 'medium') {
-    return iterativeDeepening(state, 3, 1500);
+    return iterativeDeepening(state, 3, timeLimit);
   }
 
   // Hard: depth 5-7, adaptive
   const totalPieces = state.pieces_on_board.X + state.pieces_on_board.O;
   const endgame = totalPieces <= 6;
   const maxDepth = endgame ? 7 : 5;
-  return iterativeDeepening(state, maxDepth, 1500);
+  return iterativeDeepening(state, maxDepth, timeLimit);
 }
