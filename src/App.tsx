@@ -58,7 +58,7 @@ function ContinueDialog({ onContinue, onNew }: { onContinue: () => void; onNew: 
 
 export default function App() {
   const [rules, setRulesState] = useState<HouseRules>(loadRules);
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [difficulty, setDifficulty] = useState<Difficulty>('hard');
   const [state, setState] = useState<GameState>(() => createInitialState(loadRules()));
   const [history, setHistory] = useState<GameState[]>([]);
   const [diagOpen, setDiagOpen] = useState(true);
