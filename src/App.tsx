@@ -175,18 +175,24 @@ export default function App() {
       const elapsed = Date.now() - start;
       const wait = Math.max(0, minDelay - elapsed);
       setTimeout(() => {
-        aiPendingRef.current = false;
         const cur = stateRef.current;
-        if (cur.phase === 'gameover') return;
+        if (cur.phase === 'gameover') {
+          aiPendingRef.current = false;
+          return;
+        }
 
         const resp = e.data;
         if (resp.type === 'capture') {
+          // Keep aiPendingRef true until the capture state is actually applied so
+          // no second AI action can start during the 600 ms flash window.
           setFlashCapture(resp.point);
           setTimeout(() => {
             setFlashCapture(null);
+            aiPendingRef.current = false;
             setState(applyCapture(stateRef.current, resp.point));
           }, 600);
         } else if (resp.type === 'move') {
+          aiPendingRef.current = false;
           const mv = resp.move as AIMove;
           if (mv.type === 'place') setState(applyPlace(cur, mv.to));
           else setState(applyMove(cur, mv.from!, mv.to));

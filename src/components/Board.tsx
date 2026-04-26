@@ -114,10 +114,14 @@ export function Board({ state, onPointClick, legalDests, flashCapture, heatmap, 
     for (const k of Object.keys(heatPoints)) heatPoints[+k] /= max;
   }
 
-  // Eligible captures
+  // Pieces eligible for capture this turn.
+  // When it's the player's capture turn (turn='X') these are the O pieces they can remove.
+  // When it's the AI's capture turn (turn='O') these are the X pieces at risk — shown for
+  // information only; the cursor must NOT suggest they are clickable.
   const captureElig = state.awaiting_capture
     ? eligibleCaptures(board, state.turn === 'X' ? 'O' : 'X')
     : [];
+  const playerCaptureMode = state.awaiting_capture && state.turn === 'X';
 
   // ARIA live region for screen reader announcements
   const lastNote = state.move_history[state.move_history.length - 1]?.notation ?? '';
@@ -279,7 +283,12 @@ export function Board({ state, onPointClick, legalDests, flashCapture, heatmap, 
               <circle key={`c-${i}`}
                 cx={p.cx} cy={p.cy} r="22"
                 fill="transparent"
-                style={{ cursor: (isCapElig || isLegal || isSelectable || (state.phase === 'placement' && !v)) ? 'pointer' : 'default' }}
+                style={{ cursor: (
+                  (playerCaptureMode && isCapElig) ||
+                  isLegal ||
+                  isSelectable ||
+                  (state.phase === 'placement' && !v && !state.awaiting_capture)
+                ) ? 'pointer' : 'default' }}
                 role="button"
                 aria-label={ariaLabel}
                 tabIndex={0}

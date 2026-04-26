@@ -143,8 +143,9 @@ function updateDerivedState(s: GameState): GameState {
   s.pieces_on_board.X = piecesOnBoard(s.board, 'X');
   s.pieces_on_board.O = piecesOnBoard(s.board, 'O');
   s.mills_active = currentMills(s.board, 'X').concat(currentMills(s.board, 'O'));
-  s.flying.X = s.pieces_in_hand.X === 0 && s.pieces_on_board.X === 3;
-  s.flying.O = s.pieces_in_hand.O === 0 && s.pieces_on_board.O === 3;
+  const flyingAllowed = s.house_rules.flying_allowed;
+  s.flying.X = flyingAllowed && s.pieces_in_hand.X === 0 && s.pieces_on_board.X === 3;
+  s.flying.O = flyingAllowed && s.pieces_in_hand.O === 0 && s.pieces_on_board.O === 3;
   return s;
 }
 
