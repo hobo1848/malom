@@ -10,7 +10,7 @@ import {
 import { computeDiagnostics, computeTopThreat, computeMode } from './intel';
 import {
   loadGame, saveGame, loadStats, saveStats, loadRules, saveRules,
-  hasSavedGame, resetStats as doResetStats, clearGame,
+  resetStats as doResetStats, clearGame,
 } from './storage';
 import { STRINGS } from './i18n';
 import { GlobalDefs } from './components/GlobalDefs';
@@ -57,15 +57,16 @@ function ContinueDialog({ onContinue, onNew }: { onContinue: () => void; onNew: 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const savedGame = useMemo(() => loadGame(), []);
   const [rules, setRulesState] = useState<HouseRules>(loadRules);
   const [difficulty, setDifficulty] = useState<Difficulty>('hard');
-  const [state, setState] = useState<GameState>(() => createInitialState(loadRules()));
+  const [state, setState] = useState<GameState>(() => savedGame ?? createInitialState(loadRules()));
   const [history, setHistory] = useState<GameState[]>([]);
   const [diagOpen, setDiagOpen] = useState(true);
   const [heatmap, setHeatmap] = useState(false);
   const [hints, setHints] = useState(false);
   const [showRules, setShowRules] = useState(false);
-  const [showContinue, setShowContinue] = useState(false);
+  const [showContinue, setShowContinue] = useState(() => savedGame != null);
   const [flashCapture, setFlashCapture] = useState<number | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -73,16 +74,12 @@ export default function App() {
   const workerRef = useRef<Worker | null>(null);
   const aiPendingRef = useRef(false);
 
-  // Check for saved game on mount
-  useEffect(() => {
-    if (hasSavedGame()) setShowContinue(true);
-  }, []);
-
   // Persist game state
   useEffect(() => {
+    if (showContinue) return;
     if (state.phase !== 'gameover') saveGame(state);
     else clearGame();
-  }, [state]);
+  }, [state, showContinue]);
 
   // Lazy-init Web Worker
   const getWorker = useCallback((): Worker => {
@@ -382,11 +379,14 @@ export default function App() {
       {showContinue && (
         <ContinueDialog
           onContinue={() => {
-            const saved = loadGame();
-            if (saved) setState(saved);
             setShowContinue(false);
           }}
           onNew={() => {
+            const fresh = createInitialState(rules);
+            fresh.score = stateRef.current.score;
+            setState(fresh);
+            setHistory([]);
+            setFlashCapture(null);
             clearGame();
             setShowContinue(false);
           }}
